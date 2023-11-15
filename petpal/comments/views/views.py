@@ -80,10 +80,14 @@ class ApplicationCommentListCreateView(CommentListCreateView):
         application_id = self.kwargs['application_id']
         return Comment.objects.filter(application__id=application_id)
     
-    def perform_create(self, serializer):
+    def perform_create(self, serializer):   
         application_id = self.kwargs['application_id']
         application = get_object_or_404(Application, pk=application_id)
         comment = serializer.save(user=self.request.user, application=application)
+        # Update the application last_update_time
+        application.last_update_time = comment.created_at
+        application.save()
+        
         user = get_object_or_404(CustomUser, pk=self.request.user.id)
         reverse_url = reverse('comments:application-comment-details', args=[str(application_id), str(comment.id)])
         # Send notification to the user who owns the application
